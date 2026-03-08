@@ -2,51 +2,52 @@ default: run
 
 .PHONY: default build run clean
 
-# tools
+CC      := gcc
+AS      := nasm
+LD      := ld
+QEMU    := qemu-system-x86_64
+GRUB    := grub-mkrescue
 
-NASM := nasm
-LD := ld
-QEMU := qemu-system-x86_64
-GRUB := grub-mkrescue
+CFLAGS  := -ffreestanding -m64 -c
+ASFLAGS := -f elf64
+LDFLAGS := -n -T linker.ld
 
-# directories
+BUILD      := build
+C_BUILD    := $(BUILD)/c
+ASM_BUILD  := $(BUILD)/asm
+ISO_BUILD  := $(BUILD)/isofiles
 
-SRC := src/boot
-BUILD := build
-ISO := $(BUILD)/isofiles
+C_SOURCES   := $(wildcard src/*/*.c)
+ASM_SOURCES := $(wildcard src/*/*.asm)
 
-# files
+C_OBJECTS   := $(patsubst src/%.c,$(C_BUILD)/%.o,$(C_SOURCES))
+ASM_OBJECTS := $(patsubst src/%.asm,$(ASM_BUILD)/%.o,$(ASM_SOURCES))
+OBJECTS     := $(C_OBJECTS) $(ASM_OBJECTS)
 
 KERNEL := $(BUILD)/kernel.bin
-OBJS := $(BUILD)/MultibootHeader.o $(BUILD)/boot.o
+ISO    := $(BUILD)/os.iso
 
-# build objects
+build: $(ISO)
 
-$(BUILD)/MultibootHeader.o: $(SRC)/MultibootHeader.asm
-	mkdir -p $(BUILD)
-	$(NASM) -f elf64 $< -o $@
+run: $(ISO)
+	$(QEMU) -cdrom $(ISO)
 
-$(BUILD)/boot.o: $(SRC)/boot.asm
-	mkdir -p $(BUILD)
-	$(NASM) -f elf64 $< -o $@
+$(ISO): $(KERNEL) isofiles/boot/grub/grub.cfg
+	mkdir -p $(ISO_BUILD)/boot/grub
+	cp isofiles/boot/grub/grub.cfg $(ISO_BUILD)/boot/grub/
+	cp $(KERNEL) $(ISO_BUILD)/boot/
+	$(GRUB) -o $@ $(ISO_BUILD)
 
-# link kernel
+$(KERNEL): $(OBJECTS) linker.ld
+	$(LD) $(LDFLAGS) -o $@ $(OBJECTS)
 
-$(KERNEL): $(OBJS) linker.ld
-	$(LD) -n -T linker.ld -o $@ $(OBJS)
+$(C_BUILD)/%.o: src/%.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -o $@ $<
 
-# build iso
-
-$(BUILD)/os.iso: $(KERNEL)
-	mkdir -p $(ISO)/boot/grub
-	cp isofiles/boot/grub/grub.cfg $(ISO)/boot/grub/
-	cp $(KERNEL) $(ISO)/boot/
-	$(GRUB) -o $@ $(ISO)
-
-build: $(BUILD)/os.iso
-
-run: build
-	$(QEMU) -cdrom $(BUILD)/os.iso
+$(ASM_BUILD)/%.o: src/%.asm
+	mkdir -p $(dir $@)
+	$(AS) $(ASFLAGS) -o $@ $<
 
 clean:
 	rm -rf $(BUILD)
