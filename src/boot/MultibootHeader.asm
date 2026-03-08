@@ -1,4 +1,4 @@
-EXTERN start
+extern start
 
 section .multiboot_header
 
