@@ -1,7 +1,16 @@
 ENTRY(start)
 
 SECTIONS {
-    . = 1M;
+    .paging 0x60000 (NOLOAD) :
+    {
+        *(.paging)
+    }
+
+    .stack 0x270000 (NOLOAD) :
+    {
+        *(.stack)
+    }
+    . = 0x280000;
 
     .boot :
     {
@@ -12,5 +21,11 @@ SECTIONS {
     .text :
     {
         *(.text)
+    }
+
+    /* read‑only data (strings, constants, GDT, etc.) */
+    .rodata :
+    {
+        *(.rodata)
     }
 }
