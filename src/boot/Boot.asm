@@ -1,3 +1,4 @@
+extern InitalizePaging
 global start
 
 section .text
@@ -16,4 +17,6 @@ start:
     mov word [0xb8014], 0x026c ; l
     mov word [0xb8016], 0x0264 ; d
     mov word [0xb8018], 0x0221 ; !
+
+    call InitalizePaging
     hlt
