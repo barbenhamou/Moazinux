@@ -1,6 +1,6 @@
 #include <misc/helpers.h>
 
-__attribute__((always_inline)) void inline outb(WORD port, BYTE data){
+__attribute__((always_inline)) void inline outb(uint16_t port, uint8_t data){
     __asm__ __volatile__ ("outb %1, %0" : : "dN" (port), "a" (data));
 }
 
@@ -32,14 +32,14 @@ uint64_t pow(uint64_t base, uint64_t power) {
     return base * pow(base, power - 1);
 }
 
-BYTE *memcpy(BYTE *dest, const BYTE *src, uint32_t bytes) {
+uint8_t *memcpy(uint8_t *dest, const uint8_t *src, uint32_t bytes) {
     for (int i = 0; i < bytes; ++i) {
         dest[i] = src[i];
     }
     return dest;
 }
 
-bool_t memcmp(BYTE *p1, BYTE *p2, uint32_t bytes) {
+bool_t memcmp(uint8_t *p1, uint8_t *p2, uint32_t bytes) {
     for (uint32_t i = 0; i < bytes; ++i) {
         if (*p1 != *p2) return FALSE;
         p1++; p2++;
@@ -47,7 +47,7 @@ bool_t memcmp(BYTE *p1, BYTE *p2, uint32_t bytes) {
     return TRUE;
 }
 
-uint32_t strlen(uchar_t *p) {
+uint32_t strlen(uchar *p) {
     for (uint32_t i = 0; ; ++i) {
         if (p[i] == '\0') return i;
     }
@@ -55,25 +55,25 @@ uint32_t strlen(uchar_t *p) {
     return -1;
 }
 
-void *memset(void *p, BYTE val, uint64_t bytes) {
+void *memset(void *p, uint8_t val, uint64_t bytes) {
     for (uint64_t i = 0; i < bytes; ++i) {
-        ((BYTE*)p)[i] = (BYTE)val;
+        ((uint8_t*)p)[i] = (uint8_t)val;
     }
     return p;
 }
 
-WORD *memsetw(WORD *p, WORD val, uint32_t words) {
+uint16_t *memsetw(uint16_t *p, uint16_t val, uint32_t words) {
     for (uint32_t i = 0; i < words; ++i) {
         p[i] = val;
     }
     return p;
 }
 
-void putch(uchar_t c) {
+void putch(uchar c) {
     outb(0x3f8, c);
 }
 
-void puts(uchar_t* str,...) {
+void puts(uchar* str,...) {
 
     va_list ptr;
     va_start(ptr, str);
@@ -82,14 +82,14 @@ void puts(uchar_t* str,...) {
 
     for (uint32_t i = 0; i < length; ++i) {
         if (str[i] == '%') {
-            switch (str[i+1]) {
+            switch (str[i + 1]) {
                 case 'd': {
                     uint32_t num = va_arg(ptr, uint32_t);
                     uint32_t digits = (uint32_t)len(num, num, 10);
                     uint32_t bound = (uint32_t)pow(10, digits - 1);
 
                     while (bound) {
-                        putch('0' + (num/bound) % 10);
+                        putch('0' + (num / bound) % 10);
                         bound /= 10;
                     }
                     break; 
@@ -104,7 +104,7 @@ void puts(uchar_t* str,...) {
                     uint64_t bound = pow(10, digits - 1);
 
                     while (bound) {
-                        putch('0' + (num/bound) % 10);
+                        putch('0' + (num / bound) % 10);
                         bound /= 10;
                     }
                     break; 
@@ -116,10 +116,10 @@ void puts(uchar_t* str,...) {
                     uint64_t bound = pow(16, digits - 1);
 
                     while (bound) {
-                        if ((num/bound)%16 > 9) {
-                            putch('a' + (num/bound) % 16 - 10);
+                        if ((num / bound) % 16 > 9) {
+                            putch('a' + (num / bound) % 16 - 10);
                         } else {
-                            putch('0' + (num/bound) % 16);
+                            putch('0' + (num / bound) % 16);
                         }
                         bound /= 16;
                     }
@@ -132,16 +132,16 @@ void puts(uchar_t* str,...) {
                     uint64_t bound = pow(2, digits - 1);
 
                     while (bound) {
-                        putch('0' + (num/bound) % 2);
+                        putch('0' + (num / bound) % 2);
                         bound /= 2;
                     }
                     break; 
                 }
                 case 'm': {
-                    BYTE length_ = str[i+2] - '0';
+                    uint8_t length_ = str[i + 2] - '0';
 
-                    BYTE *st = va_arg(ptr, BYTE*);
-                    for (BYTE j = 0; j < length_; ++j) {
+                    uint8_t *st = va_arg(ptr, uint8_t*);
+                    for (uint8_t j = 0; j < length_; ++j) {
                         putch(*st);
                         st++;
                     }
@@ -150,8 +150,11 @@ void puts(uchar_t* str,...) {
                     break; 
                 }
                 case 's': {
-                    uchar_t* sentence = va_arg(ptr, uchar_t*);
-                    for (uint32_t i = 0; i < strlen(sentence); ++i) {}
+                    uchar* sentence = va_arg(ptr, uchar*);
+                    for (uint32_t i = 0; i < strlen(sentence); ++i) {
+                        putch(sentence[i]);
+                    }
+                    break;
                 }
             }
 
@@ -163,7 +166,7 @@ void puts(uchar_t* str,...) {
 }
 
 
-void puts_with_va(uchar_t* str, va_list ptr) {
+void puts_with_va(uchar* str, va_list ptr) {
 
     uint32_t length = strlen(str);
 
@@ -225,10 +228,10 @@ void puts_with_va(uchar_t* str, va_list ptr) {
                     break; 
                 }
                 case 'm': {
-                    BYTE length_ = str[i+2] - '0';
+                    uint8_t length_ = str[i+2] - '0';
 
-                    BYTE *st = va_arg(ptr, BYTE*);
-                    for (BYTE j = 0; j < length_; ++j) {
+                    uint8_t *st = va_arg(ptr, uint8_t*);
+                    for (uint8_t j = 0; j < length_; ++j) {
                         putch(*st);
                         st++;
                     }
@@ -245,7 +248,7 @@ void puts_with_va(uchar_t* str, va_list ptr) {
     }
 }
 
-void DEBUG(uchar_t *str,...) {
+void DEBUG(uchar *str,...) {
     puts("\033[35m[DEBUG]\t");
     va_list ptr;
     va_start(ptr, str);
@@ -254,7 +257,7 @@ void DEBUG(uchar_t *str,...) {
     puts("\x1b[0m");
 }
 
-void INFO(uchar_t *str,...) {
+void INFO(uchar *str,...) {
     puts("\e[36m[INFO]\t");
     va_list ptr;
     va_start(ptr, str);
@@ -263,7 +266,7 @@ void INFO(uchar_t *str,...) {
     puts("\e[0m");
 }
 
-void ERROR(uchar_t *str,...) {
+void ERROR(uchar *str,...) {
     puts("\e[31m[ERROR]\t");
     va_list ptr;
     va_start(ptr, str);

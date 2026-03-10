@@ -30,7 +30,7 @@ ISO    := $(BUILD)/os.iso
 build: $(ISO)
 
 run: $(ISO)
-	$(QEMU) -cdrom $(ISO)
+	$(QEMU) -cdrom $(ISO) -serial stdio
 
 $(ISO): $(KERNEL) isofiles/boot/grub/grub.cfg
 	mkdir -p $(ISO_BUILD)/boot/grub

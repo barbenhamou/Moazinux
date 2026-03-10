@@ -1,6 +1,6 @@
 extern paging_init
 extern switch_protected_to_long
-extern main
+extern kmain
 global start
 global stack_top
 
@@ -21,5 +21,5 @@ start:
     bits 64
         mov rax, 0x2f592f412f4b2f4f
         mov qword [0xb8000], rax
-        call main
+        call kmain
         hlt 
