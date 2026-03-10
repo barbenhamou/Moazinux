@@ -8,8 +8,8 @@ LD      := ld
 QEMU    := qemu-system-x86_64
 GRUB    := grub-mkrescue
 
-CFLAGS  := -ffreestanding -m64 -c -I include
-ASFLAGS := -f elf64
+CFLAGS  := -ffreestanding -m64 -c -I include -g
+ASFLAGS := -f elf64 -g -F dwarf
 LDFLAGS := -n -T linker.ld
 
 BUILD      := build
@@ -28,6 +28,9 @@ OBJECTS     := $(C_OBJECTS) $(ASM_OBJECTS)
 
 KERNEL := $(BUILD)/kernel.bin
 ISO    := $(BUILD)/os.iso
+
+gdb: build
+	$(QEMU) -cdrom $(ISO) -serial stdio -s -S & gdb
 
 build: $(ISO)
 
