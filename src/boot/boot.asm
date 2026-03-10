@@ -1,5 +1,5 @@
-extern InitalizePaging
-extern ProtectedToLong
+extern paging_init
+extern switch_protected_to_long
 extern main
 global start
 global stack_top
@@ -15,8 +15,8 @@ section .text
 bits 32
 start:
     mov esp, stack_top
-    call InitalizePaging
-    call ProtectedToLong
+    call paging_init
+    call switch_protected_to_long
     
     bits 64
         mov rax, 0x2f592f412f4b2f4f

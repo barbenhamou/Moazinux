@@ -8,7 +8,7 @@ LD      := ld
 QEMU    := qemu-system-x86_64
 GRUB    := grub-mkrescue
 
-CFLAGS  := -ffreestanding -m64 -c
+CFLAGS  := -ffreestanding -m64 -c -I include
 ASFLAGS := -f elf64
 LDFLAGS := -n -T linker.ld
 

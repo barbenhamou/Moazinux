@@ -1,15 +1,15 @@
 extern stack_top
 extern PML4
-global ProtectedToLong
+global switch_protected_to_long
 
-%include "src/boot/Macros.asm"
+%include "src/boot/macros.asm"
 
 section .rodata
-%include "src/boot/Gdt.asm"
+%include "src/boot/gdt.asm"
 
 section .text
 bits 32
-ProtectedToLong:
+switch_protected_to_long:
     ; caller pushed a 32-bit return address on the stack.  when we
     ; far-jump into 64-bit mode the stack pointer is unchanged, but the
     ; size of return addresses changes to 64 bits.  pop/push tricks let

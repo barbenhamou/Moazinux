@@ -1,6 +1,6 @@
-global InitalizePaging
+global paging_init
 global PML4
-%include "src/boot/Macros.asm"
+%include "src/boot/macros.asm"
 
 section .paging
     align 4096
@@ -13,7 +13,7 @@ section .paging
 
 section .text
 bits 32
-InitalizePaging:
+paging_init:
 
 	; Point the first entry of the PML4 to the PDPT
 	mov eax, PDPT
@@ -27,7 +27,7 @@ InitalizePaging:
 
 	; Map 512 * 2MB = 1GB with 2MB pages
 	mov edi, 0  ; PDT index (0-511)
-    MapPDT:
+    PDT_map:
         ; Physical address for this 2MB page = edi * 0x200000
         mov eax, edi
         mov ebx, 0x200000  ; 2MB
@@ -37,7 +37,7 @@ InitalizePaging:
 
         inc edi
         cmp edi, 512
-        jne MapPDT
+        jne PDT_map
 
     ret
 
