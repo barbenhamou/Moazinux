@@ -19,6 +19,8 @@ ISO_BUILD  := $(BUILD)/isofiles
 
 C_SOURCES   := $(wildcard src/*/*.c)
 ASM_SOURCES := $(wildcard src/*/*.asm)
+ASM_EXCLUDES := src/boot/macros.asm src/boot/gdt.asm src/boot/mode_switch.asm
+ASM_SOURCES := $(filter-out $(ASM_EXCLUDES),$(ASM_SOURCES))
 
 C_OBJECTS   := $(patsubst src/%.c,$(C_BUILD)/%.o,$(C_SOURCES))
 ASM_OBJECTS := $(patsubst src/%.asm,$(ASM_BUILD)/%.o,$(ASM_SOURCES))

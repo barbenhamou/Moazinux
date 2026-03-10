@@ -10,6 +10,7 @@
 
 %define CR0_PAGING_ENABLED (1 << 31)
 %define CR0_WRITE_PROTECT (1 << 16)
+%define CR0_PROTECTED_ENABLED (1 << 0)
 
 ; Page directory flags
 %define PAGE_PS               (1 << 7)  ; Page Size (1 = 2MB page in PDT)
@@ -50,6 +51,8 @@
 ; Note: All GDT descriptors are configured for kernel mode (DPL0 / ring 0).
 ; For user mode segments, DPL should be set to 3 (DPL3).
 
+%define REAL_MODE_START 0x4000
+%define REAL_MODE_ADDRESS(addr) (addr - low_level_func + REAL_MODE_START)
 %macro UpdateSelectors 1
     mov ax, %1
     mov ss, ax

@@ -1,6 +1,14 @@
+
+%ifndef MODE_SWITCH_ASM
+%define MODE_SWITCH_ASM
+
 extern stack_top
 extern PML4
+extern low_level_func
 global switch_protected_to_long
+global switch_long_to_protected
+global switch_protected_to_real
+global switch_real_to_protected
 
 %include "src/boot/macros.asm"
 
@@ -8,6 +16,11 @@ section .rodata
 %include "src/boot/gdt.asm"
 
 section .text
+bits 32
+ivt:
+    dw 0x03ff ; Limit  0 - 15
+    dq 0 ; Base 16 - 89
+
 bits 32
 switch_protected_to_long:
     ; caller pushed a 32-bit return address on the stack.  when we
@@ -42,8 +55,85 @@ switch_protected_to_long:
 
     jmp GDT.code64:long_mode_entry
 
-    bits 64
-    long_mode_entry:
-        mov rsp, stack_top
-        push rsi
-        ret
+bits 64
+long_mode_entry:
+    and rsi, 0xffffffff
+    push rsi
+    ret
+
+bits 64
+switch_long_to_protected:
+    pop rsi
+
+    push GDT.code32
+    push compatibility
+    retfq
+
+bits 32
+compatibility:
+    ; Disable paging
+    mov eax, cr0
+    and eax, ~(CR0_PAGING_ENABLED | CR0_WRITE_PROTECT)
+    mov cr0, eax
+
+    ; Clear Long mode bit in EFER
+    mov ecx, EFER_MSR
+    rdmsr
+    and eax, ~LONG_MODE_BIT
+    wrmsr
+
+    ; Disable PAE
+    mov eax, cr4
+    and eax, ~PAE_MODE_BIT
+    mov cr4, eax
+
+    push esi
+    ret
+
+bits 32
+switch_protected_to_real:
+    pop esi
+    cli
+    jmp GDT.code16:REAL_MODE_ADDRESS(real_mode_entry)
+
+bits 16
+real_mode_entry:
+    UpdateSelectors GDT.data16
+    mov bx, REAL_MODE_ADDRESS(ivt)
+    lidt [bx]
+
+    ; Disable protected
+    mov eax, cr0
+    and eax, ~CR0_PROTECTED_ENABLED
+    mov cr0, eax
+
+    jmp 0:REAL_MODE_ADDRESS(real_mode)
+
+real_mode:
+    UpdateSelectors 0
+    push si
+    ret
+
+bits 16
+switch_real_to_protected:
+    pop si
+    cli
+
+    ; Enable protected.
+    mov eax, cr0
+    or eax, CR0_PROTECTED_ENABLED
+    mov cr0, eax
+
+    jmp GDT.code32:REAL_MODE_ADDRESS(protected_mode)
+
+bits 32
+    protected_mode:
+
+    UpdateSelectors GDT.data32
+
+    ; Returning the addr to stack.
+    and esi, 0xffff
+    push esi
+    ret
+
+%endif
