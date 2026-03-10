@@ -40,10 +40,10 @@ switch_protected_to_long:
 
     UpdateSelectors GDT.data64
 
-    jmp GDT.code64:LongModeEntry
+    jmp GDT.code64:long_mode_entry
 
     bits 64
-    LongModeEntry:
+    long_mode_entry:
         mov rsp, stack_top
         push rsi
         ret
