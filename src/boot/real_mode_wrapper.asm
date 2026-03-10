@@ -1,11 +1,16 @@
 global real_mode_wrapper
 global low_level_func
+global low_level_func_end
 
 %include "src/boot/macros.asm"
 
 section .text
 bits 64
 real_mode_wrapper:
+    ; Translate callback VA (in RDI) to its copied real-mode address.
+    sub edi, low_level_func
+    add edi, REAL_MODE_START
+
     mov rsi, REAL_MODE_ADDRESS(switch_long_to_protected)
     call rsi
 bits 32

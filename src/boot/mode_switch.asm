@@ -9,6 +9,7 @@ global switch_protected_to_long
 global switch_long_to_protected
 global switch_protected_to_real
 global switch_real_to_protected
+global real_mode_testing
 
 %include "src/boot/macros.asm"
 
@@ -94,7 +95,7 @@ bits 32
 switch_protected_to_real:
     pop esi
     cli
-    jmp GDT.code16:REAL_MODE_ADDRESS(real_mode_entry)
+    jmp dword GDT.code16:REAL_MODE_ADDRESS(real_mode_entry)
 
 bits 16
 real_mode_entry:
@@ -107,7 +108,7 @@ real_mode_entry:
     and eax, ~CR0_PROTECTED_ENABLED
     mov cr0, eax
 
-    jmp 0:REAL_MODE_ADDRESS(real_mode)
+    jmp word 0:REAL_MODE_ADDRESS(real_mode)
 
 real_mode:
     UpdateSelectors 0
@@ -124,7 +125,7 @@ switch_real_to_protected:
     or eax, CR0_PROTECTED_ENABLED
     mov cr0, eax
 
-    jmp GDT.code32:REAL_MODE_ADDRESS(protected_mode)
+    jmp dword GDT.code32:REAL_MODE_ADDRESS(protected_mode)
 
 bits 32
     protected_mode:
@@ -135,5 +136,31 @@ bits 32
     and esi, 0xffff
     push esi
     ret
+
+bits 16
+real_mode_testing:
+    pusha
+    pushf
+    ; Software INT works with IF=0, but BIOS handlers may expect IRQs.
+    sti
+
+    mov si, REAL_MODE_ADDRESS(real_mode_test_msg)
+
+.print_loop:
+    lodsb
+    test al, al
+    jz .done
+    mov ah, 0x0E
+    mov bh, 0x00
+    mov bl, 0x0F
+    int 0x10
+    jmp .print_loop
+
+.done:
+    popf
+    popa
+    ret
+
+real_mode_test_msg db "16-bit BIOS test via INT 10h", 0
 
 %endif
